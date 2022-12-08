@@ -409,7 +409,7 @@ function init(parser) {
  * @param item {Item} The item that has been completely recognized.
  */
 function complete(parser, item) {
-  if (item.origin === parser.index && item.node == undefined) {
+  if (item.origin === parser.index) {
     /* When an item is predicted and completed within the same set (or, the origin is
      * the same as the current input index), the item is nullable and will have no node
      * attached. This special case adds an Epsilon derivation to the completed item and
@@ -417,8 +417,10 @@ function complete(parser, item) {
      * predictions of the same nullable nonterminal in the same set. See
      * [note.nullable-nonterminals].
      */
-    item.node = createNextNode(parser, item, parser.epsilonNode);
-    parser.completedNullables[item.slot.subject] = item.node;
+    if (item.node == undefined)
+      item.node = createNextNode(parser, item, parser.epsilonNode);
+    if (parser.completedNullables[item.slot.subject] == undefined)
+      parser.completedNullables[item.slot.subject] = item.node;
   }
 
   const originSet = parser.chart[item.origin];

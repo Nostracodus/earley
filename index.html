@@ -1,10 +1,10 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="description" content="Earley SPPF parser" />
+    <meta name="description" content="An Earley SPPF parser and visualizer" />
     <meta name="keywords" content="Earley, SPPF" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Interactive Earley Parser</title>
+    <title>An Earley Parser Visualizer</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -35,6 +35,7 @@
           <option>Right Recursive</option>
           <option>Hidden Left Recursive</option>
           <option>Hidden Right Recursive</option>
+          <option>PEP</option>
           <option>Aho Left</option>
           <option>Aho Right</option>
           <option>Brackets</option>
@@ -174,6 +175,11 @@
         aAbB: {
           grammar: ["S ::= a A b B", "A ::= a", "B ::= A", "B ::= a"],
           input: "aaba",
+        },
+
+        "PEP": {
+          grammar: ["S ::= A A A A", "A ::= E", "A ::= a", "E ::= "],
+          input: "aa",
         },
       };
 
