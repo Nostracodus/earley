@@ -1,0 +1,292 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="description" content="Earley SPPF parser" />
+    <meta name="keywords" content="Earley, SPPF" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Earley Parser</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter&family=JetBrains+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/normalize.css" />
+    <link rel="stylesheet" href="css/style.css" />
+
+    <script src="https://unpkg.com/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+    <script src="scripts/viz.js"></script>
+    <script src="scripts/full.render.js"></script>
+    <script src="scripts/earley.js"></script>
+  </head>
+  <body>
+    <div>
+      <div id="input-pane" class="pane">
+        <select
+          id="grammars"
+          onchange="installGrammar(this)"
+          style="width: 100%"
+          class="mb-1 pl-1 pr-1 text-ui"
+        >
+          <option>Math</option>
+          <option>Recursive</option>
+          <option>Left Recursive</option>
+          <option>Right Recursive</option>
+          <option>Hidden Left Recursive</option>
+          <option>Hidden Right Recursive</option>
+          <option>EEE</option>
+          <option>Aho Left</option>
+          <option>Aho Right</option>
+          <option>Brackets</option>
+          <option>EEE</option>
+          <option>AT aT</option>
+          <option>ST</option>
+          <option>aAbB</option>
+          <option value="Custom">Custom</option>
+        </select>
+        <div>
+          <input
+            id="input-str"
+            value="abbb"
+            class="border pl-1 text-monospace input"
+          />
+          <button
+            onclick="parseGrammar()"
+            class="float-r ml-1 text-ui"
+            style="background-color: #fff"
+          >
+            Parse
+          </button>
+        </div>
+        <div class="mt-1">
+          <div
+            id="grammar"
+            contenteditable="true"
+            class="border text-monospace p-1 input"
+          ></div>
+        </div>
+      </div>
+      <div id="explainer" class="pane text-ui p-2">
+        <p>
+          This is a tool that implements the Earley parsing algorithm as given
+          by Elizabeth Scott and Adrian Johnstone in
+          <a href="https://core.ac.uk/download/pdf/82746212.pdf"
+            >Recognition is not parsing — SPPF-style parsing from cubic
+            recognisers</a
+          >. The input pane has some sample grammars collected from various
+          parsing papers. Custom grammars and inputs can be supplied in the
+          forms.
+        </p>
+        <p>
+          Grammars are expected to be in the form
+          <code>Nonterminal ::= term*</code> with spaces between terms and one
+          rule per line. Input is expected to be supplied with no spaces. Rules
+          that can derive the empty string are written with an empty right-hand
+          side (as in <code>S ::= </code>).
+        </p>
+      </div>
+      <div id="sppf-canvas"></div>
+    </div>
+
+    <script type="text/javascript">
+      document.getElementById("grammar").addEventListener("input", (_) => {
+        switchToCustom();
+      });
+
+      let exampleGrammars = {
+        Custom: {},
+
+        Math: {
+          grammar: [
+            "E ::= E + T",
+            "E ::= T",
+            "T ::= T * F",
+            "T ::= F",
+            "F ::= 0",
+            "F ::= 1",
+            "F ::= 2",
+          ],
+          input: "0+1*2",
+        },
+
+        "Left Recursive": {
+          grammar: ["S ::= S a", "S ::= a"],
+          input: "aaa",
+        },
+
+        "Right Recursive": {
+          grammar: ["S ::= a S", "S ::= a"],
+          input: "aaa",
+        },
+
+        "Hidden Left Recursive": {
+          grammar: ["S ::= X S a", "S ::= a", "X ::= "],
+          input: "aaa",
+        },
+
+        "Hidden Right Recursive": {
+          grammar: ["S ::= a S X", "S ::= a", "X ::= "],
+          input: "aaa",
+        },
+
+        EEE: {
+          grammar: ["E ::= E E E", "E ::= 1", "E ::= "],
+          input: "1",
+        },
+
+        "Aho Right": {
+          grammar: ["S ::= x S S", "S ::= "],
+          input: "x",
+        },
+
+        "Aho Left": {
+          grammar: ["S ::= S S x", "S ::= "],
+          input: "x",
+        },
+
+        Brackets: {
+          grammar: ["E ::= E E", "E ::= ( E )", "E ::= "],
+          input: "()",
+        },
+
+        Recursive: {
+          grammar: ["S ::= x S x", "S ::= x"],
+          input: "xxx",
+        },
+
+        "AT aT": {
+          grammar: [
+            "S ::= A T",
+            "S ::= a T",
+            "A ::= a",
+            "A ::= B A",
+            "B ::= ",
+            "T ::= b b b",
+          ],
+          input: "abbb",
+        },
+
+        ST: {
+          grammar: ["S ::= S T", "S ::= a", "B ::= ", "T ::= a B", "T ::= a"],
+          input: "aa",
+        },
+
+        aAbB: {
+          grammar: ["S ::= a A b B", "A ::= a", "B ::= A", "B ::= a"],
+          input: "aaba",
+        },
+      };
+
+      function populateFieldsWithGrammarInfo(grammar) {
+        let grammarElement = document.getElementById("grammar");
+        let inputElement = document.getElementById("input-str");
+        if (grammar.input !== undefined) inputElement.value = grammar.input;
+        if (grammar.grammar !== undefined)
+          grammarElement.innerText = grammar.grammar.join("\n");
+      }
+
+      function installGrammar(selectObject) {
+        return populateFieldsWithGrammarInfo(
+          exampleGrammars[selectObject.value]
+        );
+      }
+
+      function switchToCustom() {
+        let selectObject = document.getElementById("grammars");
+        selectObject.value = "Custom";
+        return populateFieldsWithGrammarInfo(exampleGrammars["Custom"]);
+      }
+
+      document.getElementById("grammars").dispatchEvent(new Event("change"));
+
+      // Taken from https://stackoverflow.com/questions/58980235/stop-pasting-html-style-in-a-contenteditable-div-only-paste-the-plain-text
+      // This removes styles when copy-pasting into input selections.
+
+      const editable_div = document.getElementById("grammar");
+
+      editable_div.addEventListener("paste", function (e) {
+        e.preventDefault();
+        const text = e.clipboardData
+          ? (e.originalEvent || e).clipboardData.getData("text/plain")
+          : window.clipboardData
+          ? window.clipboardData.getData("Text")
+          : "";
+
+        const range = document.getSelection().getRangeAt(0);
+        range.deleteContents();
+
+        const textNode = document.createTextNode(text);
+        range.insertNode(textNode);
+        range.selectNodeContents(textNode);
+        range.collapse(false);
+
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      });
+
+      let parseGrammar = () => {
+        /* As soon as the user parses their input, hide the explainer. They've got the idea
+         * by now.
+         */
+        let explainerElement = document.getElementById("explainer");
+        explainerElement.style.visibility = "hidden";
+
+        let inputElement = document.getElementById("input-str");
+
+        /* In error cases, the input string object will be modified to indicate an error.
+         * When the user clicks the 'parse' button, we should assume there is no error
+         * and reset the visual style.
+         */
+        inputElement.classList.remove("error");
+        inputElement.title = "";
+
+        let rawText = document.getElementById("grammar").innerText;
+        let rules = rawText
+          .split("\n")
+          .map((str) => str.trim())
+          .filter((s) => s.length > 0);
+
+        let input = inputElement.value;
+
+        const grammar = new Grammar(rules);
+
+        const parser = new Parser(grammar, input);
+
+        while (!isExhausted(parser) && parser.error === undefined) {
+          step(parser);
+        }
+
+        if (parser.error !== undefined) {
+          inputElement.classList.add("error");
+          inputElement.title = `syntax error at token ${parser.error + 1}`;
+        } else if (parser.accepted == undefined) {
+          inputElement.classList.add("error");
+          inputElement.title = `syntax error: incomplete input`;
+        } else {
+          let theme = {
+            bgcolor: "none",
+            fgcolor: "#000000",
+          };
+
+          let node = visualization.renderNode(parser.accepted, theme);
+          var viz = new Viz();
+
+          viz
+            .renderSVGElement(node)
+            .then((element) => {
+              let canvas = document.getElementById("sppf-canvas");
+              canvas.replaceChildren(element);
+
+              svgPanZoom("#sppf-canvas > svg");
+            })
+            .catch((error) => {
+              viz = new Viz();
+              console.error(error);
+            });
+        }
+      };
+    </script>
+  </body>
+</html>
