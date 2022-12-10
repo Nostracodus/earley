@@ -3,7 +3,8 @@ This visualizer is [available here](http://nostracodus.github.io/earley).
 
 # Description
 
-This is a tool that implements the Earley parsing algorithm as given by Elizabeth Scott and Adrian Johnstone in Recognition is not parsing — SPPF-style parsing from cubic recognisers.
+This is a tool that implements the Earley parsing algorithm as given by Elizabeth Scott and Adrian Johnstone in [Recognition is not parsing — SPPF-style parsing from cubic recognisers](https://core.ac.uk/download/pdf/82746212.pdf).
+
 Traditional Earley parser algorithms are based on adding links between items and walking the links post-parse to construct some form of derivation. This algorithm instead builds a derivation graph during parsing. 
 
 # Useful Links
