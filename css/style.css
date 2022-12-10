@@ -64,6 +64,13 @@
     background-color: #000 !important;
   }
 
+  .github-corner {
+    position: absolute;
+    z-index: 100;
+    top: 0px;
+    right: 0px;
+  }
+
   #input-pane {
     position: absolute;
     padding: 5px;
