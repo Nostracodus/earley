@@ -20,8 +20,9 @@
  *
  * --------------------------------------------------------------------------------------
  *
- * This file implements the Earley parsing algorithm outlined by Elizabeth Scott in
- * Recognition is not Parsing - SPPF-style parsing from cubic recognizers.
+ * This file implements the Earley parsing algorithm outlined by Elizabeth Scott and
+ * Adrian Johnstone in Recognition is not Parsing - SPPF-style parsing from cubic
+ * recognizers.
  *
  * Typically, Earley recognizers are turned into Earley parsers by adding links between
  * Earley items. Once parsing is finished, these links can be walked to reveal
