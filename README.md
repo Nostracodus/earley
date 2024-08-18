@@ -1,6 +1,8 @@
 
 This visualizer is [available here](http://nostracodus.github.io/earley).
 
+I've discussed one aspect of the implementation of this algorithm [in a public gist](https://gist.github.com/Nostracodus/5c74b56ba5e7f0731f9815593a6f207b). In this gist, I propose a change to the Earley parsing algorithm to simplify the implementation of this algorithm. 
+
 # Description
 
 This is a tool that implements the Earley parsing algorithm as given by Elizabeth Scott and Adrian Johnstone in [Recognition is not parsing — SPPF-style parsing from cubic recognisers](https://core.ac.uk/download/pdf/82746212.pdf).
